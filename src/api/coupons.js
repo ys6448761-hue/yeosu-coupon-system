@@ -321,4 +321,74 @@ router.post('/:code/use', async (req, res) => {
   }
 });
 
+// 4️⃣ POST /api/coupons/test - 테스트 쿠폰 발급 (더미 데이터)
+router.post('/test', async (req, res) => {
+  try {
+    const { partnerId, discountAmount, expiryDays } = req.body;
+
+    // 입력값 검증
+    if (!partnerId || !discountAmount) {
+      return res.status(400).json({
+        success: false,
+        error: 'invalid_input',
+        message: 'partnerId와 discountAmount는 필수입니다'
+      });
+    }
+
+    // discountAmount 유효성 검사
+    if (typeof discountAmount !== 'number' || discountAmount <= 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'invalid_amount',
+        message: 'discountAmount는 0보다 큰 숫자여야 합니다'
+      });
+    }
+
+    // 테스트용 쿠폰 코드 생성 (YEOSU-TEST-XXXXXX)
+    const randomChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let randomCode = '';
+    for (let i = 0; i < 6; i++) {
+      randomCode += randomChars.charAt(Math.floor(Math.random() * randomChars.length));
+    }
+    const testCouponCode = `YEOSU-TEST-${randomCode}`;
+
+    // UUID 생성 (간단한 버전)
+    const couponId = 'test-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9);
+
+    // 만료일 계산
+    const days = expiryDays || 30;
+    const expiryDate = new Date();
+    expiryDate.setDate(expiryDate.getDate() + days);
+    const expiryDateStr = expiryDate.toISOString().split('T')[0];
+
+    // QR 코드 생성
+    const qrCodeData = await generateQRCode(testCouponCode);
+
+    // 생성 시간
+    const createdAt = new Date().toISOString();
+
+    // 응답
+    return res.status(200).json({
+      success: true,
+      couponCode: testCouponCode,
+      couponId: couponId,
+      partnerId: partnerId,
+      discountAmount: discountAmount,
+      expiryDate: expiryDateStr,
+      status: 'issued',
+      qrCode: qrCodeData,
+      createdAt: createdAt,
+      message: '테스트 쿠폰이 성공적으로 생성되었습니다'
+    });
+
+  } catch (error) {
+    console.error('테스트 쿠폰 생성 오류:', error);
+    res.status(500).json({
+      success: false,
+      error: 'server_error',
+      message: error.message || '쿠폰 생성 중 오류가 발생했습니다'
+    });
+  }
+});
+
 module.exports = router;
