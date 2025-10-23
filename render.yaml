@@ -3,7 +3,7 @@ services:
     name: yeosu-coupon-system
     env: node
     runtime: node
-    buildCommand: npm install
+    buildCommand: npm ci --production
     startCommand: npm start
     envVars:
       - key: NODE_VERSION
